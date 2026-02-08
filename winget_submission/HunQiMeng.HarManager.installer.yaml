@@ -7,7 +7,7 @@ Commands:
   - HarManager
 Installers:
   - Architecture: x64
-    InstallerUrl: <在此处填入你的 exe 下载链接>
-    InstallerSha256: AD4117819B763E5DEF144F03E5274D4EB4F79D639402512D1D51E98537AB1897
+    InstallerUrl: https://github.com/OldSaltFish/HarManager/releases/download/v1.0.0/HarManager.exe
+    InstallerSha256: A74A42D5E0B9E26DC982E027CE7BC1C7BB950163D39B74DB5F9BB05D8B9C5F0A
 ManifestType: installer
 ManifestVersion: 1.6.0
