@@ -2,6 +2,14 @@
 
 HarManager 是一个跨平台的 HAR (HTTP Archive) 文件查看器，基于 Avalonia UI 和 .NET 9 开发。它提供了现代化的三栏式界面，支持 HAR 文件导入、请求/响应详情查看、语法高亮以及请求管理功能。
 
+## 安装
+
+可以通过 WinGet 直接安装：
+
+```bash
+winget install HunQiMeng.HarManager
+```
+
 ## 1. 开发环境准备
 
 在开始开发之前，请确保您的系统已安装以下工具：
