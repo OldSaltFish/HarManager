@@ -1,0 +1,487 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:ae="clr-namespace:AvaloniaEdit;assembly=AvaloniaEdit"
+             xmlns:vm="using:HarManager.ViewModels"
+             xmlns:helpers="using:HarManager.Helpers"
+             xmlns:conv="using:Avalonia.Data.Converters"
+             mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="800"
+             x:Class="HarManager.Views.WorkspaceView"
+             x:DataType="vm:WorkspaceViewModel"
+             x:Name="Root"
+             DragDrop.AllowDrop="True">
+    
+    <Grid ColumnDefinitions="260,*" Background="#F0F0F0">
+        
+        <!-- Left Sidebar: Group Management -->
+        <Border Grid.Column="0" Background="#FAFAFA" BorderBrush="#E0E0E0" BorderThickness="0,0,1,0">
+            <Grid RowDefinitions="Auto,*">
+                <StackPanel Grid.Row="0" Margin="10" Spacing="10">
+                    <Button Content="← Back to Projects" Command="{Binding GoBackCommand}"
+                            HorizontalAlignment="Left" Background="Transparent" Foreground="Gray"/>
+                    
+                    <TextBlock Text="{Binding Project.Name}" FontWeight="Bold" FontSize="18" Margin="0,5"/>
+                    
+                    <Grid ColumnDefinitions="*, Auto">
+                        <Button Grid.Column="0" Content="☁ Sync Project" 
+                                Command="{Binding SyncProjectCommand}"
+                                HorizontalAlignment="Stretch" Margin="0,0,5,0"/>
+                        <Button Grid.Column="1" Content="⚙" 
+                                ToolTip.Tip="Sync Settings"
+                                Command="{Binding OpenSyncSettingsCommand}"/>
+                    </Grid>
+                    <TextBlock Text="{Binding SyncStatus}" FontSize="11" Foreground="Gray" Margin="0,5,0,0" TextWrapping="Wrap"/>
+
+                    <Grid ColumnDefinitions="*, Auto">
+                        <Button Grid.Column="0" Content="Import HAR" 
+                                Command="{Binding ImportHarCommand}" 
+                                CommandParameter="{Binding $parent[Window].StorageProvider}"
+                                HorizontalAlignment="Stretch" 
+                                HorizontalContentAlignment="Center"
+                                Background="#007ACC" Foreground="White" Margin="0,0,5,0"/>
+                        <Button Grid.Column="1" Content="+" 
+                                ToolTip.Tip="New Group"
+                                Command="{Binding CreateGroupCommand}"
+                                Background="#4CAF50" Foreground="White"/>
+                    </Grid>
+                </StackPanel>
+                
+                <ListBox Grid.Row="1" ItemsSource="{Binding Groups}" 
+                         SelectedItem="{Binding SelectedGroup}"
+                         Background="Transparent" BorderThickness="0">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <Panel>
+                                <StackPanel Orientation="Horizontal" Spacing="10" Margin="5" IsVisible="{Binding !IsRenaming}">
+                                    <TextBlock Text="📁" VerticalAlignment="Center"/>
+                                    <TextBlock Text="{Binding Name}" FontWeight="Medium" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+                                </StackPanel>
+                                <TextBox Text="{Binding Name}" IsVisible="{Binding IsRenaming}" MinWidth="100">
+                                    <TextBox.KeyBindings>
+                                        <KeyBinding Gesture="Enter" Command="{Binding #Root.((vm:WorkspaceViewModel)DataContext).ConfirmRenameGroupCommand}" CommandParameter="{Binding}"/>
+                                    </TextBox.KeyBindings>
+                                </TextBox>
+                                <Panel.ContextMenu>
+                                    <ContextMenu>
+                                        <MenuItem Header="Rename" Command="{Binding #Root.((vm:WorkspaceViewModel)DataContext).RenameGroupCommand}" CommandParameter="{Binding}"/>
+                                        <MenuItem Header="Export" Command="{Binding #Root.((vm:WorkspaceViewModel)DataContext).ExportGroupCommand}" CommandParameter="{Binding}"/>
+                                        <Separator/>
+                                        <MenuItem Header="Delete" Command="{Binding #Root.((vm:WorkspaceViewModel)DataContext).DeleteGroupCommand}" CommandParameter="{Binding}" Foreground="Red"/>
+                                    </ContextMenu>
+                                </Panel.ContextMenu>
+                            </Panel>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </Grid>
+        </Border>
+
+        <!-- Main Content Area -->
+        <Grid Grid.Column="1" ColumnDefinitions="*, 4, 450">
+            
+            <!-- Middle Pane: Request List -->
+            <Grid Grid.Column="0" RowDefinitions="Auto,*">
+                <Border Grid.Row="0" Background="White" Padding="5" BorderBrush="#E0E0E0" BorderThickness="0,0,0,1">
+                    <Grid ColumnDefinitions="Auto,*">
+                        <TextBlock Text="Requests" FontWeight="Bold" FontSize="16" VerticalAlignment="Center" Margin="5,0,15,0"/>
+                        <CheckBox Grid.Column="0" Content="Simplify URL" IsChecked="{Binding IsSimplifiedUrlMode}" Margin="80,0,0,0" VerticalAlignment="Center"/>
+                        <ListBox Grid.Column="1" ItemsSource="{Binding Filters}" SelectedItem="{Binding SelectedFilter}"
+                                 Background="Transparent" BorderThickness="0">
+                            <ListBox.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <StackPanel Orientation="Horizontal" Spacing="2"/>
+                                </ItemsPanelTemplate>
+                            </ListBox.ItemsPanel>
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding}" FontSize="12"/>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                            <ListBox.Styles>
+                                <Style Selector="ListBoxItem">
+                                    <Setter Property="Padding" Value="8,4"/>
+                                    <Setter Property="CornerRadius" Value="4"/>
+                                </Style>
+                            </ListBox.Styles>
+                        </ListBox>
+                    </Grid>
+                </Border>
+                
+                <DataGrid Grid.Row="1" ItemsSource="{Binding FilteredEntries}" 
+                          SelectedItem="{Binding SelectedEntry}"
+                          SelectionMode="Extended"
+                          AutoGenerateColumns="False" 
+                          IsReadOnly="False"
+                          GridLinesVisibility="Horizontal"
+                          Background="White"
+                          RowBackground="White"
+                          HeadersVisibility="Column"
+                          SelectionChanged="OnDataGridSelectionChanged"
+                          KeyDown="OnDataGridKeyDown"
+                          CellEditEnded="OnCellEditEnded"
+                          CanUserResizeColumns="True">
+                    
+                    <DataGrid.Styles>
+                        <Style Selector="DataGridColumnHeader">
+                            <Setter Property="MinHeight" Value="35" />
+                            <Setter Property="Padding" Value="10,0" />
+                            <Setter Property="VerticalContentAlignment" Value="Center" />
+                            <Setter Property="HorizontalContentAlignment" Value="Left" />
+                            <Setter Property="SeparatorBrush" Value="#DDDDDD" />
+                            <Setter Property="Template">
+                                <ControlTemplate>
+                                    <Border Background="{TemplateBinding Background}"
+                                            BorderBrush="{TemplateBinding BorderBrush}"
+                                            BorderThickness="{TemplateBinding BorderThickness}"
+                                            CornerRadius="{TemplateBinding CornerRadius}">
+                                        <Grid>
+                                            <ContentPresenter Content="{TemplateBinding Content}"
+                                                              ContentTemplate="{TemplateBinding ContentTemplate}"
+                                                              VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                                              HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                                              Margin="{TemplateBinding Padding}" />
+                                            <Path Name="SortIcon"
+                                                  IsVisible="False"
+                                                  HorizontalAlignment="Right"
+                                                  VerticalAlignment="Center"
+                                                  Stretch="Uniform"
+                                                  Height="10"
+                                                  Width="10"
+                                                  Margin="0,0,4,0"
+                                                  Data="M0,0 L10,0 L5,5 Z"
+                                                  Fill="{TemplateBinding Foreground}" />
+                                        </Grid>
+                                    </Border>
+                                </ControlTemplate>
+                            </Setter>
+                        </Style>
+                    </DataGrid.Styles>
+
+                    <DataGrid.ContextMenu>
+                        <ContextMenu>
+                            <MenuItem Header="Copy as cURL" Command="{Binding CopyAsCurlCommand}" CommandParameter="{Binding SelectedEntry}"/>
+                            <Separator/>
+                            <MenuItem Header="Move to Group">
+                                <MenuItem Header="Create New Group..." Command="{Binding MoveEntriesToNewGroupCommand}" />
+                                <Separator/>
+                                <MenuItem Header="Existing Groups" ItemsSource="{Binding Groups}">
+                                    <MenuItem.ItemTemplate>
+                                        <DataTemplate>
+                                            <MenuItem Header="{Binding Name}" Command="{Binding #Root.((vm:WorkspaceViewModel)DataContext).MoveEntriesToGroupCommand}" CommandParameter="{Binding}"/>
+                                        </DataTemplate>
+                                    </MenuItem.ItemTemplate>
+                                </MenuItem>
+                            </MenuItem>
+                            <MenuItem Header="Keep Only Selected" Command="{Binding KeepOnlySelectedEntriesCommand}"/>
+                            <Separator/>
+                            <MenuItem Header="Delete" Command="{Binding DeleteEntriesCommand}" CommandParameter="{Binding SelectedEntries}" Foreground="Red"/>
+                        </ContextMenu>
+                    </DataGrid.ContextMenu>
+
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="Method" Binding="{Binding Request.Method}" Width="80" FontWeight="Bold" IsReadOnly="True"/>
+                        <DataGridTextColumn Header="Name" Binding="{Binding Name}" Width="150" />
+                        <DataGridTextColumn Header="Status" Binding="{Binding Response.Status}" Width="70" IsReadOnly="True"/>
+                        <DataGridTemplateColumn Header="URL" Width="*" IsReadOnly="True">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding Request.Url, Converter={x:Static helpers:UrlDisplayConverter.Instance}, ConverterParameter={Binding #Root.((vm:WorkspaceViewModel)DataContext).IsSimplifiedUrlMode}}" 
+                                               VerticalAlignment="Center" Margin="5,0"/>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                        <DataGridTextColumn Header="Group" Binding="{Binding SourceFile}" Width="100" Foreground="Gray" IsReadOnly="True"/>
+                        <DataGridTextColumn Header="Time" Binding="{Binding Time, StringFormat={}{0:F0} ms}" Width="80" IsReadOnly="True"/>
+                    </DataGrid.Columns>
+                </DataGrid>
+            </Grid>
+
+            <!-- Splitter -->
+            <GridSplitter Grid.Column="1" Background="#E0E0E0" ResizeDirection="Columns"/>
+
+            <!-- Right Pane: Details (Split Request/Response) -->
+            <Grid Grid.Column="2" RowDefinitions="*, 4, *">
+                
+                <!-- Request Section (Top) -->
+                <Grid Grid.Row="0" RowDefinitions="Auto, *">
+                    <Border Grid.Row="0" Background="#F8F9FA" BorderBrush="#E0E0E0" BorderThickness="0,0,0,1" Padding="10">
+                         <Grid ColumnDefinitions="Auto, *">
+                            <Border Background="#E0E0E0" CornerRadius="3" Padding="6,2" Margin="0,0,10,0">
+                                <TextBlock Text="{Binding SelectedEntry.Request.Method}" FontWeight="Bold" Foreground="#333"/>
+                            </Border>
+                            <TextBox Grid.Column="1" Text="{Binding SelectedEntry.Request.Url}" IsReadOnly="True" BorderThickness="0" Background="Transparent" VerticalAlignment="Center"/>
+                        </Grid>
+                    </Border>
+                    
+                    <TabControl Grid.Row="1" Margin="0" Padding="0">
+                        <TabItem Header="Body" IsVisible="{Binding HasRequestBody}">
+                            <Grid RowDefinitions="Auto, *">
+                                <Border Grid.Row="0" Background="#F5F5F5" Padding="5" BorderBrush="#E0E0E0" BorderThickness="0,0,0,1">
+                                    <StackPanel Orientation="Horizontal" Spacing="10">
+                                        <StackPanel Orientation="Horizontal" Spacing="5">
+                                            <RadioButton Content="Raw" GroupName="ReqViewMode" 
+                                                         IsChecked="{Binding RequestBodyViewMode, Converter={x:Static helpers:StringEqualsConverter.Instance}, ConverterParameter=Raw, Mode=TwoWay}"/>
+                                            <RadioButton Content="JSON" GroupName="ReqViewMode" IsVisible="{Binding IsRequestJson}"
+                                                         IsChecked="{Binding RequestBodyViewMode, Converter={x:Static helpers:StringEqualsConverter.Instance}, ConverterParameter=JSON, Mode=TwoWay}"/>
+                                            <RadioButton Content="{Binding TableModeLabel}" GroupName="ReqViewMode" IsVisible="{Binding IsRequestForm}"
+                                                         IsChecked="{Binding RequestBodyViewMode, Converter={x:Static helpers:StringEqualsConverter.Instance}, ConverterParameter=Table, Mode=TwoWay}"/>
+                                            <CheckBox Content="Wrap" IsChecked="{Binding IsWordWrapEnabled}" Margin="5,0,0,0"/>
+                                        </StackPanel>
+                                        <Separator Width="1" Height="15" Background="Gray"/>
+                                        <Button Content="Copy JSON" Command="{Binding CopyRequestBodyAsJsonCommand}" Padding="5,2" FontSize="11"/>
+                                        <Button Content="Copy K:V" Command="{Binding CopyRequestBodyAsColonCommand}" Padding="5,2" FontSize="11"/>
+                                    </StackPanel>
+                                </Border>
+                                <Panel Grid.Row="1">
+                                    <DataGrid ItemsSource="{Binding SelectedEntry.Request.PostData.Params}" 
+                                              IsVisible="{Binding RequestBodyViewMode, Converter={x:Static helpers:StringEqualsConverter.Instance}, ConverterParameter=Table}"
+                                              AutoGenerateColumns="False" GridLinesVisibility="All" CanUserReorderColumns="True" CanUserResizeColumns="True">
+                                        <DataGrid.Columns>
+                                            <DataGridTemplateColumn Header="Name" Width="200">
+                                                <DataGridTemplateColumn.CellTemplate>
+                                                    <DataTemplate>
+                                                        <TextBox Text="{Binding Name}" IsReadOnly="True" BorderThickness="0" Background="Transparent" />
+                                                    </DataTemplate>
+                                                </DataGridTemplateColumn.CellTemplate>
+                                            </DataGridTemplateColumn>
+                                            <DataGridTemplateColumn Header="Value" Width="*">
+                                                <DataGridTemplateColumn.CellTemplate>
+                                                    <DataTemplate>
+                                                        <TextBox Text="{Binding Value}" IsReadOnly="True" BorderThickness="0" Background="Transparent" />
+                                                    </DataTemplate>
+                                                </DataGridTemplateColumn.CellTemplate>
+                                            </DataGridTemplateColumn>
+                                        </DataGrid.Columns>
+                                    </DataGrid>
+                                    
+                                    <!-- For JSON Mode (Formatted + Folded) -->
+                                    <ae:TextEditor Name="RequestJsonEditor"
+                                                  Document="{Binding RequestDocument}" 
+                                                  IsVisible="{Binding RequestBodyViewMode, Converter={x:Static helpers:StringEqualsConverter.Instance}, ConverterParameter=JSON}"
+                                                  IsReadOnly="True" 
+                                                  ShowLineNumbers="True"
+                                                  WordWrap="{Binding IsWordWrapEnabled}"
+                                                  FontFamily="Consolas,Menlo,Monospace"
+                                                  helpers:TextMateHelper.Language="{Binding RequestLanguage}"/>
+                                                  
+                                    <!-- For Raw Mode (Plain Text) -->
+                                    <ae:TextEditor Name="RequestRawEditor"
+                                                  Document="{Binding RequestDocument}" 
+                                                  IsVisible="{Binding RequestBodyViewMode, Converter={x:Static helpers:StringEqualsConverter.Instance}, ConverterParameter=Raw}"
+                                                  IsReadOnly="True" 
+                                                  ShowLineNumbers="True"
+                                                  WordWrap="{Binding IsWordWrapEnabled}"
+                                                  FontFamily="Consolas,Menlo,Monospace"
+                                                  helpers:TextMateHelper.Language="{Binding RequestLanguage}"/>
+                                </Panel>
+                            </Grid>
+                        </TabItem>
+                        <TabItem Header="Params" IsVisible="{Binding HasQueryParams}">
+                            <Grid RowDefinitions="Auto, *">
+                                <Border Grid.Row="0" Background="#F5F5F5" Padding="5" BorderBrush="#E0E0E0" BorderThickness="0,0,0,1">
+                                    <StackPanel Orientation="Horizontal" Spacing="10">
+                                        <Button Content="Copy JSON" Command="{Binding CopyParamsAsJsonCommand}" CommandParameter="{Binding SelectedEntry.Request.QueryString}" Padding="5,2" FontSize="11"/>
+                                        <Button Content="Copy K:V" Command="{Binding CopyParamsAsColonCommand}" CommandParameter="{Binding SelectedEntry.Request.QueryString}" Padding="5,2" FontSize="11"/>
+                                    </StackPanel>
+                                </Border>
+                                <DataGrid ItemsSource="{Binding SelectedEntry.Request.QueryString}" 
+                                          AutoGenerateColumns="False" GridLinesVisibility="All" Grid.Row="1" CanUserReorderColumns="True" CanUserResizeColumns="True">
+                                    <DataGrid.Columns>
+                                        <DataGridTemplateColumn Header="Name" Width="200">
+                                            <DataGridTemplateColumn.CellTemplate>
+                                                <DataTemplate>
+                                                    <TextBox Text="{Binding Name}" IsReadOnly="True" BorderThickness="0" Background="Transparent" />
+                                                </DataTemplate>
+                                            </DataGridTemplateColumn.CellTemplate>
+                                        </DataGridTemplateColumn>
+                                        <DataGridTemplateColumn Header="Value" Width="*">
+                                            <DataGridTemplateColumn.CellTemplate>
+                                                <DataTemplate>
+                                                    <TextBox Text="{Binding Value}" IsReadOnly="True" BorderThickness="0" Background="Transparent" />
+                                                </DataTemplate>
+                                            </DataGridTemplateColumn.CellTemplate>
+                                        </DataGridTemplateColumn>
+                                    </DataGrid.Columns>
+                                </DataGrid>
+                            </Grid>
+                        </TabItem>
+                        <TabItem Header="Headers">
+                            <Grid RowDefinitions="Auto, *">
+                                <Border Grid.Row="0" Background="#F5F5F5" Padding="5" BorderBrush="#E0E0E0" BorderThickness="0,0,0,1">
+                                    <StackPanel Orientation="Horizontal" Spacing="10">
+                                        <Button Content="Copy JSON" Command="{Binding CopyParamsAsJsonCommand}" CommandParameter="{Binding SelectedEntry.Request.Headers}" Padding="5,2" FontSize="11"/>
+                                        <Button Content="Copy K:V" Command="{Binding CopyParamsAsColonCommand}" CommandParameter="{Binding SelectedEntry.Request.Headers}" Padding="5,2" FontSize="11"/>
+                                    </StackPanel>
+                                </Border>
+                                <DataGrid ItemsSource="{Binding SelectedEntry.Request.Headers}" 
+                                          AutoGenerateColumns="False" GridLinesVisibility="All" Grid.Row="1" CanUserReorderColumns="True" CanUserResizeColumns="True">
+                                    <DataGrid.Columns>
+                                        <DataGridTemplateColumn Header="Name" Width="200">
+                                            <DataGridTemplateColumn.CellTemplate>
+                                                <DataTemplate>
+                                                    <TextBox Text="{Binding Name}" IsReadOnly="True" BorderThickness="0" Background="Transparent" />
+                                                </DataTemplate>
+                                            </DataGridTemplateColumn.CellTemplate>
+                                        </DataGridTemplateColumn>
+                                        <DataGridTemplateColumn Header="Value" Width="*">
+                                            <DataGridTemplateColumn.CellTemplate>
+                                                <DataTemplate>
+                                                    <TextBox Text="{Binding Value}" IsReadOnly="True" BorderThickness="0" Background="Transparent" />
+                                                </DataTemplate>
+                                            </DataGridTemplateColumn.CellTemplate>
+                                        </DataGridTemplateColumn>
+                                    </DataGrid.Columns>
+                                </DataGrid>
+                            </Grid>
+                        </TabItem>
+                        <TabItem Header="Cookies">
+                            <Grid RowDefinitions="Auto, *">
+                                <Border Grid.Row="0" Background="#F5F5F5" Padding="5" BorderBrush="#E0E0E0" BorderThickness="0,0,0,1">
+                                    <StackPanel Orientation="Horizontal" Spacing="10">
+                                        <Button Content="Copy JSON" Command="{Binding CopyParamsAsJsonCommand}" CommandParameter="{Binding SelectedEntry.Request.Cookies}" Padding="5,2" FontSize="11"/>
+                                        <Button Content="Copy K:V" Command="{Binding CopyParamsAsColonCommand}" CommandParameter="{Binding SelectedEntry.Request.Cookies}" Padding="5,2" FontSize="11"/>
+                                        <Button Content="Copy ;" Command="{Binding CopyCookiesAsSemicolonCommand}" CommandParameter="{Binding SelectedEntry.Request.Cookies}" Padding="5,2" FontSize="11"/>
+                                    </StackPanel>
+                                </Border>
+                                <DataGrid ItemsSource="{Binding SelectedEntry.Request.Cookies}" 
+                                          AutoGenerateColumns="False" GridLinesVisibility="All" Grid.Row="1" CanUserReorderColumns="True" CanUserResizeColumns="True">
+                                    <DataGrid.Columns>
+                                        <DataGridTemplateColumn Header="Name" Width="200">
+                                            <DataGridTemplateColumn.CellTemplate>
+                                                <DataTemplate>
+                                                    <TextBox Text="{Binding Name}" IsReadOnly="True" BorderThickness="0" Background="Transparent" />
+                                                </DataTemplate>
+                                            </DataGridTemplateColumn.CellTemplate>
+                                        </DataGridTemplateColumn>
+                                        <DataGridTemplateColumn Header="Value" Width="*">
+                                            <DataGridTemplateColumn.CellTemplate>
+                                                <DataTemplate>
+                                                    <TextBox Text="{Binding Value}" IsReadOnly="True" BorderThickness="0" Background="Transparent" />
+                                                </DataTemplate>
+                                            </DataGridTemplateColumn.CellTemplate>
+                                        </DataGridTemplateColumn>
+                                    </DataGrid.Columns>
+                                </DataGrid>
+                            </Grid>
+                        </TabItem>
+                    </TabControl>
+                </Grid>
+
+                <!-- Vertical Splitter -->
+                <GridSplitter Grid.Row="1" Background="#E0E0E0" ResizeDirection="Rows"/>
+
+                <!-- Response Section (Bottom) -->
+                <Grid Grid.Row="2" RowDefinitions="Auto, *">
+                    <Border Grid.Row="0" Background="#F8F9FA" BorderBrush="#E0E0E0" BorderThickness="0,0,0,1" Padding="10">
+                        <StackPanel Orientation="Horizontal" Spacing="10">
+                            <TextBlock Text="Response" FontWeight="Bold" Foreground="#555"/>
+                            <Border Background="{Binding SelectedEntry.Response.Status, Converter={x:Static helpers:StatusColorConverter.Instance}}" CornerRadius="3" Padding="6,2">
+                                <TextBlock Text="{Binding SelectedEntry.Response.Status}" Foreground="White" FontWeight="Bold"/>
+                            </Border>
+                            <TextBlock Text="{Binding SelectedEntry.Response.StatusText}" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Border>
+
+                    <TabControl Grid.Row="1" Margin="0" Padding="0">
+                        <TabItem Header="Body">
+                            <Grid RowDefinitions="Auto, *">
+                                <Border Grid.Row="0" Background="#F5F5F5" Padding="5" BorderBrush="#E0E0E0" BorderThickness="0,0,0,1">
+                                    <StackPanel Orientation="Horizontal" Spacing="10">
+                                        <StackPanel Orientation="Horizontal" Spacing="5">
+                                            <RadioButton Content="Raw" GroupName="RespViewMode" 
+                                                         IsChecked="{Binding ResponseBodyViewMode, Converter={x:Static helpers:StringEqualsConverter.Instance}, ConverterParameter=Raw, Mode=TwoWay}"/>
+                                            <RadioButton Content="JSON" GroupName="RespViewMode" IsVisible="{Binding IsResponseJson}"
+                                                         IsChecked="{Binding ResponseBodyViewMode, Converter={x:Static helpers:StringEqualsConverter.Instance}, ConverterParameter=JSON, Mode=TwoWay}"/>
+                                            <CheckBox Content="Wrap" IsChecked="{Binding IsWordWrapEnabled}" Margin="5,0,0,0"/>
+                                        </StackPanel>
+                                    </StackPanel>
+                                </Border>
+                                <Panel Grid.Row="1">
+                                    <!-- For JSON Mode (Formatted + Folded) -->
+                                    <ae:TextEditor Name="ResponseJsonEditor"
+                                                  Document="{Binding ResponseDocument}" 
+                                                  IsVisible="{Binding ResponseBodyViewMode, Converter={x:Static helpers:StringEqualsConverter.Instance}, ConverterParameter=JSON}"
+                                                  IsReadOnly="True" 
+                                                  ShowLineNumbers="True"
+                                                  WordWrap="{Binding IsWordWrapEnabled}"
+                                                  FontFamily="Consolas,Menlo,Monospace"
+                                                  helpers:TextMateHelper.Language="{Binding ResponseLanguage}"/>
+                                    
+                                    <!-- For Raw Mode (Plain Text) -->
+                                    <ae:TextEditor Name="ResponseRawEditor"
+                                                  Document="{Binding ResponseDocument}" 
+                                                  IsVisible="{Binding ResponseBodyViewMode, Converter={x:Static helpers:StringEqualsConverter.Instance}, ConverterParameter=Raw}"
+                                                  IsReadOnly="True" 
+                                                  ShowLineNumbers="True"
+                                                  WordWrap="{Binding IsWordWrapEnabled}"
+                                                  FontFamily="Consolas,Menlo,Monospace"
+                                                  helpers:TextMateHelper.Language="{Binding ResponseLanguage}"/>
+                                </Panel>
+                            </Grid>
+                        </TabItem>
+                        <TabItem Header="Headers">
+                            <Grid RowDefinitions="Auto, *">
+                                <Border Grid.Row="0" Background="#F5F5F5" Padding="5" BorderBrush="#E0E0E0" BorderThickness="0,0,0,1">
+                                    <StackPanel Orientation="Horizontal" Spacing="10">
+                                        <Button Content="Copy JSON" Command="{Binding CopyParamsAsJsonCommand}" CommandParameter="{Binding SelectedEntry.Response.Headers}" Padding="5,2" FontSize="11"/>
+                                        <Button Content="Copy K:V" Command="{Binding CopyParamsAsColonCommand}" CommandParameter="{Binding SelectedEntry.Response.Headers}" Padding="5,2" FontSize="11"/>
+                                    </StackPanel>
+                                </Border>
+                                <DataGrid ItemsSource="{Binding SelectedEntry.Response.Headers}" 
+                                          AutoGenerateColumns="False" GridLinesVisibility="All" Grid.Row="1" CanUserReorderColumns="True" CanUserResizeColumns="True">
+                                    <DataGrid.Columns>
+                                        <DataGridTemplateColumn Header="Name" Width="200">
+                                            <DataGridTemplateColumn.CellTemplate>
+                                                <DataTemplate>
+                                                    <TextBox Text="{Binding Name}" IsReadOnly="True" BorderThickness="0" Background="Transparent" />
+                                                </DataTemplate>
+                                            </DataGridTemplateColumn.CellTemplate>
+                                        </DataGridTemplateColumn>
+                                        <DataGridTemplateColumn Header="Value" Width="*">
+                                            <DataGridTemplateColumn.CellTemplate>
+                                                <DataTemplate>
+                                                    <TextBox Text="{Binding Value}" IsReadOnly="True" BorderThickness="0" Background="Transparent" />
+                                                </DataTemplate>
+                                            </DataGridTemplateColumn.CellTemplate>
+                                        </DataGridTemplateColumn>
+                                    </DataGrid.Columns>
+                                </DataGrid>
+                            </Grid>
+                        </TabItem>
+                        <TabItem Header="Cookies">
+                            <Grid RowDefinitions="Auto, *">
+                                <Border Grid.Row="0" Background="#F5F5F5" Padding="5" BorderBrush="#E0E0E0" BorderThickness="0,0,0,1">
+                                    <StackPanel Orientation="Horizontal" Spacing="10">
+                                        <Button Content="Copy JSON" Command="{Binding CopyParamsAsJsonCommand}" CommandParameter="{Binding SelectedEntry.Response.Cookies}" Padding="5,2" FontSize="11"/>
+                                        <Button Content="Copy K:V" Command="{Binding CopyParamsAsColonCommand}" CommandParameter="{Binding SelectedEntry.Response.Cookies}" Padding="5,2" FontSize="11"/>
+                                        <Button Content="Copy ;" Command="{Binding CopyCookiesAsSemicolonCommand}" CommandParameter="{Binding SelectedEntry.Response.Cookies}" Padding="5,2" FontSize="11"/>
+                                    </StackPanel>
+                                </Border>
+                                <DataGrid ItemsSource="{Binding SelectedEntry.Response.Cookies}" 
+                                          AutoGenerateColumns="False" GridLinesVisibility="All" Grid.Row="1" CanUserReorderColumns="True" CanUserResizeColumns="True">
+                                    <DataGrid.Columns>
+                                        <DataGridTemplateColumn Header="Name" Width="200">
+                                            <DataGridTemplateColumn.CellTemplate>
+                                                <DataTemplate>
+                                                    <TextBox Text="{Binding Name}" IsReadOnly="True" BorderThickness="0" Background="Transparent" />
+                                                </DataTemplate>
+                                            </DataGridTemplateColumn.CellTemplate>
+                                        </DataGridTemplateColumn>
+                                        <DataGridTemplateColumn Header="Value" Width="*">
+                                            <DataGridTemplateColumn.CellTemplate>
+                                                <DataTemplate>
+                                                    <TextBox Text="{Binding Value}" IsReadOnly="True" BorderThickness="0" Background="Transparent" />
+                                                </DataTemplate>
+                                            </DataGridTemplateColumn.CellTemplate>
+                                        </DataGridTemplateColumn>
+                                    </DataGrid.Columns>
+                                </DataGrid>
+                            </Grid>
+                        </TabItem>
+                    </TabControl>
+                </Grid>
+            </Grid>
+        </Grid>
+    </Grid>
+</UserControl>

@@ -1,0 +1,37 @@
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+  <Package Name="HarManager" Manufacturer="HarManager Team" Version="1.0.0.0" UpgradeCode="7c40d7c3-3e1d-4b53-8519-741961601004" Scope="perMachine">
+    <MajorUpgrade DowngradeErrorMessage="A newer version of HarManager is already installed." />
+    
+    <MediaTemplate EmbedCab="yes" />
+
+    <StandardDirectory Id="ProgramFiles64Folder">
+      <Directory Id="INSTALLFOLDER" Name="HarManager" />
+    </StandardDirectory>
+
+    <StandardDirectory Id="ProgramMenuFolder">
+      <Directory Id="ApplicationProgramsFolder" Name="HarManager" />
+    </StandardDirectory>
+
+    <Feature Id="Main">
+      <ComponentGroupRef Id="AppComponents" />
+    </Feature>
+
+    <ComponentGroup Id="AppComponents" Directory="INSTALLFOLDER">
+      <Component>
+        <File Source="publish\HarManager.exe" KeyPath="yes">
+            <Shortcut Id="ApplicationStartMenuShortcut"
+                      Directory="ApplicationProgramsFolder"
+                      Name="HarManager"
+                      WorkingDirectory="INSTALLFOLDER"
+                      Advertise="yes"
+                      Icon="AppIcon.exe">
+            </Shortcut>
+        </File>
+        <RemoveFolder Id="CleanUpShortCut" Directory="ApplicationProgramsFolder" On="uninstall"/>
+      </Component>
+    </ComponentGroup>
+
+    <Icon Id="AppIcon.exe" SourceFile="publish\HarManager.exe"/>
+  </Package>
+</Wix>
+

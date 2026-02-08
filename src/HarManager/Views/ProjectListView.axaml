@@ -1,0 +1,64 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:HarManager.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="HarManager.Views.ProjectListView"
+             x:DataType="vm:ProjectListViewModel"
+             x:Name="Root">
+    
+    <Grid RowDefinitions="Auto,*">
+        <!-- Header -->
+        <Border Grid.Row="0" Background="#FAFAFA" BorderBrush="#E0E0E0" BorderThickness="0,0,0,1" Padding="20">
+            <Grid ColumnDefinitions="*,Auto">
+                <StackPanel Orientation="Horizontal" Spacing="10">
+                    <TextBlock Text="HarManager" FontWeight="Bold" FontSize="24" VerticalAlignment="Center"/>
+                    <TextBlock Text="Projects" FontSize="24" Foreground="Gray" VerticalAlignment="Center"/>
+                </StackPanel>
+                
+                <StackPanel Orientation="Horizontal" Spacing="10" Grid.Column="1">
+                    <Button Content="Cloud Sync" Command="{Binding OpenSyncSettingsCommand}"
+                            Background="Transparent" BorderBrush="#007ACC" BorderThickness="1" Foreground="#007ACC" Padding="15,8"/>
+                    <Button Content="New Project" Command="{Binding CreateProjectCommand}" 
+                            Background="#007ACC" Foreground="White" Padding="15,8"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- Project List -->
+        <ScrollViewer Grid.Row="1" Padding="20">
+            <ItemsControl ItemsSource="{Binding Projects}">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <WrapPanel ItemWidth="200" ItemHeight="150" />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Button Command="{Binding #Root.((vm:ProjectListViewModel)DataContext).OpenProjectCommand}" 
+                                CommandParameter="{Binding .}"
+                                Background="White" BorderBrush="#E0E0E0" BorderThickness="1"
+                                Margin="0,0,20,20" Padding="0"
+                                HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch">
+                            <Grid RowDefinitions="*,Auto">
+                                <Border Grid.Row="0" Background="#F5F5F5">
+                                    <TextBlock Text="📁" FontSize="40" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="#007ACC"/>
+                                </Border>
+                                <Border Grid.Row="1" Padding="10" Background="White">
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <TextBlock Text="{Binding Name}" FontWeight="Medium" VerticalAlignment="Center"/>
+                                        <Button Grid.Column="1" Content="🗑" 
+                                                Command="{Binding #Root.((vm:ProjectListViewModel)DataContext).DeleteProjectCommand}"
+                                                CommandParameter="{Binding .}"
+                                                Background="Transparent" Foreground="Gray" Padding="5"/>
+                                    </Grid>
+                                </Border>
+                            </Grid>
+                        </Button>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </ScrollViewer>
+    </Grid>
+</UserControl>

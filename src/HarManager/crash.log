@@ -1,0 +1,23 @@
+Microsoft.Data.Sqlite.SqliteException (0x80004005): SQLite Error 1: 'no such column: p.LastModified'.
+   at Microsoft.Data.Sqlite.SqliteException.ThrowExceptionForRC(Int32 rc, sqlite3 db)
+   at Microsoft.Data.Sqlite.SqliteCommand.PrepareAndEnumerateStatements()+MoveNext()
+   at Microsoft.Data.Sqlite.SqliteCommand.GetStatements()+MoveNext()
+   at Microsoft.Data.Sqlite.SqliteDataReader.NextResult()
+   at Microsoft.Data.Sqlite.SqliteCommand.ExecuteReader(CommandBehavior behavior)
+   at Microsoft.Data.Sqlite.SqliteCommand.ExecuteDbDataReader(CommandBehavior behavior)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReader(RelationalCommandParameterObject parameterObject)
+   at Microsoft.EntityFrameworkCore.Query.Internal.SingleQueryingEnumerable`1.Enumerator.InitializeReader(Enumerator enumerator)
+   at Microsoft.EntityFrameworkCore.Query.Internal.SingleQueryingEnumerable`1.Enumerator.<>c.<MoveNext>b__21_0(DbContext _, Enumerator enumerator)
+   at Microsoft.EntityFrameworkCore.Storage.NonRetryingExecutionStrategy.Execute[TState,TResult](TState state, Func`3 operation, Func`3 verifySucceeded)
+   at Microsoft.EntityFrameworkCore.Query.Internal.SingleQueryingEnumerable`1.Enumerator.MoveNext()
+   at System.Collections.Generic.List`1..ctor(IEnumerable`1 collection)
+   at System.Linq.Enumerable.ToList[TSource](IEnumerable`1 source)
+   at HarPurifier.ViewModels.ProjectListViewModel.LoadProjects() in d:\code\pc\har\src\HarPurifier\ViewModels\ProjectListViewModel.cs:line 31
+   at HarPurifier.ViewModels.ProjectListViewModel..ctor(AppDbContext dbContext, MainWindowViewModel mainViewModel) in d:\code\pc\har\src\HarPurifier\ViewModels\ProjectListViewModel.cs:line 26
+   at HarPurifier.ViewModels.MainWindowViewModel..ctor() in d:\code\pc\har\src\HarPurifier\ViewModels\MainWindowViewModel.cs:line 19
+   at HarPurifier.App.OnFrameworkInitializationCompleted() in d:\code\pc\har\src\HarPurifier\App.axaml.cs:line 26
+   at Avalonia.AppBuilder.SetupUnsafe()
+   at Avalonia.AppBuilder.Setup()
+   at Avalonia.AppBuilder.SetupWithLifetime(IApplicationLifetime lifetime)
+   at Avalonia.ClassicDesktopStyleApplicationLifetimeExtensions.StartWithClassicDesktopLifetime(AppBuilder builder, String[] args, Action`1 lifetimeBuilder)
+   at HarPurifier.Program.Main(String[] args) in d:\code\pc\har\src\HarPurifier\Program.cs:line 18

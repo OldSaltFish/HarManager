@@ -1,0 +1,16 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Launch HarManager",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build",
+            "program": "${workspaceFolder}/src/HarManager/bin/Debug/net9.0/HarManager.dll",
+            "args": [],
+            "cwd": "${workspaceFolder}/src/HarManager",
+            "stopAtEntry": false,
+            "console": "internalConsole"
+        }
+    ]
+}
